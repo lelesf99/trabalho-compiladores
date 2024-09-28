@@ -4,9 +4,10 @@
 #include "simbolos.h"
 
 void yyerror(const char *s);
-void inicializar_palavras_reservadas();  // Função para inicializar as palavras reservadas
+void inicializar_palavras_reservadas(TabelaSimbolos *tabela);  // Função para inicializar as palavras reservadas
 
 int linha_atual = 1;
+TabelaSimbolos *tabela_simbolos;
 
 %}
 
@@ -37,19 +38,37 @@ S [~`!@#$%\^&\*\(\)_\-\+\\\/\[\]\{\}\|'\?\>\<\.,=]
 "faca" { printf("faca\n"); }
 "fimenquanto" { printf("fimenquanto\n"); }
 
-{D}+(\.{D}+)?([Ee][\+\-]?{D}+)? { printf("CONST_NUM: %s\n", yytext); adicionar_identificador(yytext, "CONST_NUM"); }
+{D}+(\.{D}+)?([Ee][\+\-]?{D}+)? { 
+    printf("NUMERO: %s\n", yytext); 
+    adicionar_identificador(tabela_simbolos, yytext, "numero"); 
+}
 
-\"({L}|{D}|{S}|\ |\t)*\" { printf("CONST_LIT: %s\n", yytext); adicionar_identificador(yytext, "CONST_LIT"); }
+\"({L}|{D}|{S}|\ |\t)*\" { 
+    printf("LITERAL: %s\n", yytext); 
+    adicionar_identificador(tabela_simbolos, yytext, "literal"); 
+}
 
-@ { printf("CHAMADA_FUNCAO: %s\n", yytext); adicionar_identificador(yytext, "CHAMADA_FUNCAO"); }
+@ { 
+    printf("CHAMADA_FUNCAO: %s\n", yytext); 
+    adicionar_identificador(tabela_simbolos, yytext, "chamada"); 
+}
 
-{L}({L}|{D}|_)* { printf("ID_OU_FUNCAO: %s\n", yytext); adicionar_identificador(yytext, "ID_OU_FUNCAO"); }
+{L}({L}|{D}|_)* { 
+    printf("ID_OU_FUNCAO: %s\n", yytext); 
+    adicionar_identificador(tabela_simbolos, yytext, "id_ou_func"); 
+}
 
-("<"|">"|">="|"<="|"=="|"<>") { printf("OP_RELACIONAL: %s\n", yytext); }
+("<"|">"|">="|"<="|"=="|"<>") { 
+    printf("OP_RELACIONAL: %s\n", yytext); 
+}
 
-("+"|"-"|"*"|"/") { printf("OP_ARITMETICO: %s\n", yytext); }
+("+"|"-"|"*"|"/") { 
+    printf("OP_ARITMETICO: %s\n", yytext); 
+}
 
-\= { printf("ATRIBUICAO: %s\n", yytext); }
+\= { 
+    printf("ATRIBUICAO: %s\n", yytext); 
+}
 
 \( { printf("ABRE_PAR\n"); }
 \) { printf("FECHA_PAR\n"); }
@@ -58,11 +77,18 @@ S [~`!@#$%\^&\*\(\)_\-\+\\\/\[\]\{\}\|'\?\>\<\.,=]
 
 [ \t\r\n]+
 
-\{({L}|{D}|{S}|\ |\t)*\} { printf("COMENTARIO\n"); }
+\{({L}|{D}|{S}|\ |\t)*\} { 
+    printf("COMENTARIO\n"); 
+}
 
-<<EOF>> { printf("FIM_DE_ARQ\n"); return 0; }
+<<EOF>> { 
+    printf("FIM_DE_ARQ\n"); 
+    return 0; 
+}
 
-. { yyerror("erro"); }
+. { 
+    yyerror("erro"); 
+}
 
 %%
 
@@ -71,8 +97,9 @@ void yyerror(const char *s) {
 }
 
 int main(int argc, char **argv) {
-    inicializar_palavras_reservadas();  // Inicializa as palavras reservadas
-    yylex();
-    exibir_tabela_simbolos();
+    tabela_simbolos = criar_tabela(101);  // Cria a tabela de símbolos com tamanho inicial
+    inicializar_palavras_reservadas(tabela_simbolos);  // Inicializa as palavras reservadas
+    yylex();  // Inicia o analisador léxico
+    exibir_tabela_simbolos(tabela_simbolos);  // Exibe a tabela de símbolos ao final
     return 0;
 }
